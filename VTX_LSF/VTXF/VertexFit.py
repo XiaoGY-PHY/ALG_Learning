@@ -41,7 +41,6 @@ class vtxFit(TrackPool.trackPool):
         self.__m_ltkParA = np.array([])
         self.__m_ltkPar = np.array([])
         self.__m_ltkCovParA = np.array([])
-        self.__m_ltkCovPar = np.array([])
 
         ''' the matrix of vertex parameters defined here '''
         self.__m_xParA = np.zeros(6).reshape(-1, 1)
@@ -80,7 +79,6 @@ class vtxFit(TrackPool.trackPool):
         self.__m_ltkParA = np.zeros(ntrk*6).reshape(-1, 1)
         self.__m_ltkPar = np.zeros(ntrk*6).reshape(-1, 1)
         self.__m_ltkCovParA = np.zeros((ntrk*6, ntrk*6))
-        self.__m_ltkCovPar = np.zeros((ntrk*6, ntrk*6))
         for itk in range(ntrk):
             ETWT = np.dot(
                 np.dot(vtxFit.m_TRA, super().getTrackA(itk).getEw()), vtxFit.m_TRA.T)
@@ -118,9 +116,10 @@ class vtxFit(TrackPool.trackPool):
                 delchisq = chisq[it]-chisq[it-1]
                 if math.fabs(delchisq) < 1e-3:
                     break
-        if self.__chisq >= self.__chisqcut:
+        if self.__chisq >= 100:
             return False
         else:
+            self.__vertexCovMatrix()
             return True
 
     def fitVertex(self):
@@ -236,21 +235,53 @@ class vtxFit(TrackPool.trackPool):
             for m in range(2):
                 hc[m] = self.__m_H[i*2+m]
 
+            # print('track', i, 'check')
+            # print('alpha0', alpha0.T[0])
+            # print('ETWT', ETWT)
+            # print('dq', dq.T)
+            # print('vd', vd)
+            # print('hc', hc)
+            # print('kq', kq)
+            # print('dq0q', dq0q)
             alpha = alpha0-np.dot(np.dot(ETWT, dq.T),
                                   (np.dot(vd, hc)-np.dot(kq.T, dq0q)))
             mass = super().getTrack(i).getMass()
-            super().getTrack(i).setW(self.Convert67(mass, alpha))
+            # print('-----------------new----------------------',i)
+            newalpha = copy.deepcopy(self.Convert67(mass, alpha))
+            super().getTrack(i).setW(newalpha)
+            # print(newalpha.T)
             # print(alpha.T)
             # print(super().getTrack(i).getW().T)
 
         '''get chisquare value'''
-        part1 = np.dot(np.dot(self.__m_H.T, self.__m_VD), self.__m_H)[0, 0]
-        #print("part1", part1)
-        part2 = np.dot(np.dot((self.__m_xPar-self.__m_xParA).T,
-                       self.__m_xCovPar_I), (self.__m_xPar-self.__m_xParA))[0, 0]
-        #print("part2", part2)
+        part1 = np.dot(np.dot(self.__m_H.T, self.__m_VD), self.__m_H)
+        evg = np.dot(np.dot(self.__m_E.T, self.__m_VD), self.__m_H)
+        part2 = np.dot(np.dot(evg.T, self.__m_xCovPar), evg)
         self.__chisq = part1-part2
         # print(self.__chisq)
+
+        # '''get chisquare value'''
+        # part1 = np.dot(np.dot(self.__m_H.T, self.__m_VD), self.__m_H)[0, 0]
+        # print("part1", part1)
+        # part2 = np.dot(np.dot((self.__m_xPar-self.__m_xParA).T,
+        #                self.__m_xCovPar_I), (self.__m_xPar-self.__m_xParA))[0, 0]
+        # print("part2", part2)
+        # print('---------------')
+        # print(super().getTrack(0).getW().T[0])
+        # print(super().getTrack(1).getW().T[0])
+        # print('')
+        # self.__chisq = part1-part2
+        # print('')
+        # print('----------new iteration--------')
+        # print('')
+        # print('x = ', self.__m_xPar.T[0])
+
+        # print('track 0 parameters:', super().getTrack(0).getW().T[0])
+
+        # print('track 1 parameters:', super().getTrack(1).getW().T[0])
+
+        # print('chisq = ', self.__chisq[0])
+        # print('')
 
     def updateConstraints(self):
         ''' calculate d、E、D、VD '''
@@ -263,9 +294,8 @@ class vtxFit(TrackPool.trackPool):
             x = np.zeros(3).reshape(-1, 1)  # poca of track
             vx = np.zeros(3).reshape(-1, 1)  # vertex point
 
-            for idx in range(6):
-                alpha[idx] = self.__m_ltkPar[idx+i*6]
-
+            alpha = self.Convert76(super().getTrack(i).getW())
+            # print('aaalpha', alpha)
             mass = super().getTrackA(i).getMass()
             e = math.sqrt(
                 mass*mass+alpha[0]*alpha[0]+alpha[1]*alpha[1]+alpha[2]*alpha[2])
@@ -336,7 +366,8 @@ class vtxFit(TrackPool.trackPool):
             for m in range(2):
                 for n in range(2):
                     self.__m_VD[i*2+m, i*2+n] = vd[m, n]
-
+            # print('track', i)
+            # print(vd)
             '''Hc'''
             hc = np.zeros(2).reshape(-1, 1)
             hc = np.dot(Dc, (self.Convert76(super().getTrackA(
@@ -344,6 +375,60 @@ class vtxFit(TrackPool.trackPool):
             #print('x-x', (self.getVparA().getVertex()-self.getVpar().getVertex()).T)
             for n in range(2):
                 self.__m_H[i*2+n] = hc[n]
+
+    def __vertexCovMatrix(self):
+        ntrk = super().getNTrack()
+        '''calculate new Vx'''
+        self.__m_xCovPar_I = copy.deepcopy(self.__m_xCovParA_I)
+        for i in range(ntrk):
+            vd = np.zeros((2, 2))
+            ed = np.zeros((2, 3))
+            for m in range(2):
+                for n in range(2):
+                    vd[m, n] = self.__m_VD[i*2+m, i*2+n]
+            for m in range(2):
+                for n in range(3):
+                    ed[m, n] = self.__m_E[i*2+m, n]
+            self.__m_xCovPar_I += np.dot(np.dot(ed.T, vd), ed)
+        self.__m_xCovPar = np.linalg.inv(self.__m_xCovPar_I)
+
+    def swim(self):
+        ntrk = super().getNTrack()
+        for i in range(ntrk):
+            a = 0.002925
+            q = super().getCharge(i)
+            x0 = super().getTrack(i).getX()[0, 0]
+            y0 = super().getTrack(i).getX()[1, 0]
+            px0 = super().getTrack(i).getP()[0, 0]
+            py0 = super().getTrack(i).getP()[1, 0]
+            pz0 = super().getTrack(i).getP()[2, 0]
+            e = super().getTrack(i).getP()[3, 0]
+            x=self.__m_xPar[0,0]
+            y=self.__m_xPar[1,0]
+            z=self.__m_xPar[2,0]
+
+            new_W = np.zeros(7).reshape(-1, 1)
+            new_W[0,0]=px0-a*q*(y-y0)
+            new_W[1,0]=py0+a*q*(x-x0)
+            new_W[2,0]=pz0
+            new_W[3,0]=e
+            new_W[4,0]=x
+            new_W[5,0]=y
+            new_W[6,0]=z
+
+            super().getTrack(i).setW(new_W)     
+
+        # print('')
+        # print('----------swim to vertex--------')
+        # print('')
+        # print('x = ', self.__m_xPar.T[0])
+
+        # print('track 0 parameters:', super().getTrack(0).getW().T[0])
+
+        # print('track 1 parameters:', super().getTrack(1).getW().T[0])
+
+        # print('chisq = ', self.__chisq[0])
+        # print('')       
 
     def Convert76(self, p: np.array):
         m = np.zeros(6).reshape(-1, 1)

@@ -73,3 +73,10 @@ if __name__ == '__main__':
 
     print(a.getNTrack())
     print(a.getCharge(1))
+    print(a.getTrack(0).getW().T)
+    ll = np.zeros(7).reshape(-1,1)
+    # print(ll)
+    a.getTrack(0).setW(ll)
+    print(a.getTrack(0).getW())
+
+

@@ -36,11 +36,11 @@ if __name__ == '__main__':
     mtrackErrFile = '/mnt/f/ALG_Learning/VTX_LSF/TrackSample/TrackEM.dat'
 
     list_of_mass = []
-    Nevent = 5000.0
+    Nevent = 5000
     flag = 1
     print('------------------ begin vertex fit -------------------')
     for i in range(int(Nevent)):
-        if (i/Nevent*100+1) % 5 == 0:
+        if ((i+1)/Nevent*100) % 5 == 0:
             print('------------------ fit vertex',
                   5*flag, '% -------------------')
             flag += 1
@@ -56,7 +56,7 @@ if __name__ == '__main__':
         ''' define the initial vertex, usually the orgin '''
         vx = np.array([0.0, 0.0, 0.0]).reshape(-1, 1)
         Evx = np.zeros((3, 3))
-        bx = by = bz = 1e6
+        bx = by = bz = 1e12
         Evx[0, 0] = bx*bx
         Evx[1, 1] = by*by
         Evx[2, 2] = bz*bz
@@ -77,6 +77,7 @@ if __name__ == '__main__':
         Ks0 = np.zeros(4).reshape(-1, 1)
         fitWell = vtxfit.Fit()
         if fitWell:
+            vtxfit.swim()
             p4pip = copy.deepcopy(vtxfit.getP4(0))
             p4pim = copy.deepcopy(vtxfit.getP4(1))
             Ks0 = p4pip+p4pim
@@ -89,7 +90,7 @@ if __name__ == '__main__':
             list_of_mass.append(mKs)
 
     ''' plt '''
-    plt.hist(list_of_mass, bins=50, range=(0.4, 0.6), rwidth=0.85)
+    plt.hist(list_of_mass, bins=48, range=(0.487, 0.511), rwidth=0.85)
     aaxis = plt.axis()
     mKs_mean = np.mean(list_of_mass)
     plt.text(0.65*(aaxis[1]-aaxis[0])+aaxis[0], 0.8 *
@@ -97,7 +98,7 @@ if __name__ == '__main__':
     plt.text(0.65*(aaxis[1]-aaxis[0])+aaxis[0], 0.85 *
              aaxis[3], 'events: {}'.format(len(list_of_mass)))
     plt.xlabel('mKs [GeV]')
-    plt.ylabel('events / 0.004 GeV')
+    plt.ylabel('events / 0.5 MeV')
     plt.title('mass distribution of Ks')
     plt.grid()
     plt.savefig('mKs_Grid.png')

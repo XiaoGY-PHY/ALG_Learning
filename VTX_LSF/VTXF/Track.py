@@ -118,7 +118,7 @@ class track():
         return copy.deepcopy(self.__charge)
 
     def getW(self):
-        return copy.deepcopy(self.__w)
+        return self.__w
 
     def getEw(self):
         return copy.deepcopy(self.__wErr)
@@ -145,6 +145,7 @@ class track():
 
     def setW(self, w: np.array):
         self.__w = copy.deepcopy(w)
+        self.__makeXP()
 
     def setEw(self, Ew: np.array):
         self.__wErr = copy.deepcopy(Ew)

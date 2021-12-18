@@ -94,10 +94,11 @@ if __name__ == '__main__':
     Nevent = 1656709.0
     '''Nsig,Nbkg,meanGauss,sigmaGauss,a,b,c,d,e,f,g (11parameters)'''
     alpha = (
-        np.array([[0.2*Nevent, 0.8*Nevent, 1.97, 0.001, 1]])).reshape(-1, 1)
+        np.array([[0.2*Nevent, 0.8*Nevent, 1.97, 0.01, 1]])).reshape(-1, 1)
 
     '''Vy'''
-    Vy = np.diag(SigmaY)
+    vy = np.diag(SigmaY)
+    Vy = np.dot(vy, vy)
     Vy_I = np.linalg.inv(Vy)
 
     '''chi2'''
@@ -130,7 +131,7 @@ if __name__ == '__main__':
         '''chi2'''
         chi2 = np.dot(np.dot((dy-np.dot(A, eta)).T, Vy_I),
                       (dy-np.dot(A, eta)))
-        if(np.abs(chi2-chi2_A) < 0.001):
+        if(np.abs(chi2-chi2_A) < 0.00001):
             print('\n----------------------------------------------------')
             print("D: ", D, "chi2: ", float(chi2))
             print('-----')
@@ -154,7 +155,7 @@ if __name__ == '__main__':
             alpha.T[0][2], '.4e'), format(alpha.T[0][3], '.4e'), format(alpha.T[0][4], '.4e'))
 
         chi2_A = chi2+0.
-        if(chi2 < 10000):
+        if(chi2 < 100):
             break
 
     NewF = PDF(dataX, alpha)
