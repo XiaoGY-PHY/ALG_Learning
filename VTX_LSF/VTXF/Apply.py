@@ -30,10 +30,10 @@ font1 = {'family': 'Times New Roman',
 mpi = 0.13957
 
 if __name__ == '__main__':
-    ptrackFile = '/mnt/f/ALG_Learning/VTX_LSF/TrackSample/TrackP.dat'
-    ptrackErrFile = '/mnt/f/ALG_Learning/VTX_LSF/TrackSample/TrackEP.dat'
-    mtrackFile = '/mnt/f/ALG_Learning/VTX_LSF/TrackSample/TrackM.dat'
-    mtrackErrFile = '/mnt/f/ALG_Learning/VTX_LSF/TrackSample/TrackEM.dat'
+    ptrackFile = '../TrackSample/TrackP.dat'
+    ptrackErrFile = '../TrackSample/TrackEP.dat'
+    mtrackFile = '../TrackSample/TrackM.dat'
+    mtrackErrFile = '../TrackSample/TrackEM.dat'
 
     list_of_mass = []
     Nevent = 5000

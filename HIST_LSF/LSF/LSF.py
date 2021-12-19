@@ -66,7 +66,7 @@ def Amatrix(x, Alpha_A):
 
 if __name__ == '__main__':
 
-    datafile = '/mnt/f/ALG_Learning/HIST_LSF/sample/dataSample.dat'
+    datafile = '../sample/dataSample.dat'
     Nevt, dataX, dataY, SigmaY = readFile2List(datafile)
     dataX = np.array(dataX).reshape(-1, 1)
     dataY = np.array(dataY).reshape(-1, 1)
